@@ -1,0 +1,34 @@
+import torch
+#创建
+x=torch.empty(5,3)
+print(x)
+x1=torch.rand(5,3)
+print(x1)
+x2=torch.tensor([5,5,3])
+print(x2)
+#操作
+y=torch.rand(5,3)
+print(y+x1)
+print(torch.add(x1,y))
+c=y.cpu().numpy()
+#cuda
+if torch.cuda.is_available():
+    device =torch.device('cuda')
+    y=torch.ones_like(x1,device=device)
+    x=x1.to(device)
+    z=x+y
+    print(z)
+    print(z.to('cpu',torch.double))
+#自动求导
+#标量函数
+x= torch.tensor(2.0,requires_grad=True)
+y=3*x**2+2*x+1
+y.backward()
+print('y=',y.item())#继续算用.grad
+print('dy/dx',x.grad.item())#只要数用item（）
+#矩阵函数
+x=torch.tensor([[1.,2.],[3.,4.]],requires_grad=True)
+l=(x*x).sum()
+l.backward()
+print('l=',l.item())
+print('梯度dl/dx=\n',x.grad)
