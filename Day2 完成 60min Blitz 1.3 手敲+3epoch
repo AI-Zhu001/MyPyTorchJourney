@@ -1,0 +1,65 @@
+import torch, torch.nn as nn, torch.nn.functional as F
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+# 1. 网络（就是你之前写的，修正版）
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 3)
+        self.conv2 = nn.Conv2d(6, 16, 3)
+        self.fc1   = nn.Linear(16 * 5 * 5, 120)
+        self.fc2   = nn.Linear(120, 84)
+        self.fc3   = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return self.fc3(x)
+
+# 2. 超参数
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+batch_size = 64
+epochs = 3
+lr = 1e-3
+
+# 3. 数据（MNIST）
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
+train_set = datasets.MNIST(root='data', train=True,  download=True, transform=transform)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+
+# 4. 模型、损失、优化器
+net = Net().to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+
+# 5. 训练一个 epoch 函数
+def train_one_epoch():
+    net.train()
+    total, correct, loss_sum = 0, 0, 0.0
+    for x, y in tqdm(train_loader, ncols=80):
+        x, y = x.to(device), y.to(device)
+        optimizer.zero_grad()
+        out = net(x)
+        loss = criterion(out, y)
+        loss.backward()
+        optimizer.step()
+
+        loss_sum += loss.item() * x.size(0)
+        pred = out.argmax(1)
+        correct += pred.eq(y).sum().item()
+        total += x.size(0)
+    print(f'loss={loss_sum/total:.4f}  acc={100.*correct/total:.2f}%')
+
+# 6. 主入口
+if __name__ == '__main__':
+    for ep in range(1, epochs+1):
+        print(f'---- Epoch {ep} ----')
+        train_one_epoch()
