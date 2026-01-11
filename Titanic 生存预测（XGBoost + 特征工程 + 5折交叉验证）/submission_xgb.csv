@@ -1,0 +1,6 @@
+# 2）requirements.txt（完整可直接复制）
+
+```txt
+pandas
+scikit-learn
+xgboost
