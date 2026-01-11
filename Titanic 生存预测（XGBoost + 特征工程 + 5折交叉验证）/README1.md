@@ -85,4 +85,7 @@ FarePerPerson：人均票价（Fare / FamilySize）
 
 （不同环境/版本可能会有轻微波动）
 
+输出文件
+
+submission_xgb.csv
 
